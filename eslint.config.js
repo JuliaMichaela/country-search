@@ -3,7 +3,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/', 'coverage/', 'node_modules/'] },
+  { ignores: ['dist/', 'site/**', 'coverage/', 'node_modules/'] },
   js.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   {
@@ -29,5 +29,14 @@ export default tseslint.config(
   },
   // Plain JS config files are not part of the TypeScript project.
   { files: ['**/*.js'], extends: [tseslint.configs.disableTypeChecked] },
+  // Node build scripts: still linted, but outside the browser TypeScript project, so without
+  // type-aware rules and with the Node globals they use.
+  {
+    files: ['scripts/**/*.mjs'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
   eslintConfigPrettier,
 );
