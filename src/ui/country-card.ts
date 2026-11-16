@@ -1,7 +1,13 @@
 import type { CountryView } from '../types.js';
 import { createElement } from './dom.js';
 
-const populationFormat = new Intl.NumberFormat('en-US');
+const numberFormat = new Intl.NumberFormat('en-US');
+
+export const NOT_AVAILABLE = 'Not available';
+
+export function formatNumber(value: number): string {
+  return numberFormat.format(value);
+}
 
 function createEmojiFlag(country: CountryView): HTMLElement | undefined {
   if (country.flagEmoji === '') {
@@ -15,7 +21,7 @@ function createEmojiFlag(country: CountryView): HTMLElement | undefined {
 }
 
 // The flag image when there is a URL; if it is missing or fails to load, the emoji instead.
-function createFlag(country: CountryView): HTMLElement {
+export function createFlag(country: CountryView): HTMLElement {
   const flag = createElement('div', { className: 'flag' });
   const emoji = createEmojiFlag(country);
 
@@ -58,15 +64,33 @@ function createFact(label: string, value: string): HTMLElement {
   ]);
 }
 
-export function createCountryCard(country: CountryView): HTMLLIElement {
+export type OpenDetails = (country: CountryView, opener: HTMLButtonElement) => void;
+
+// The only interactive element is the "Details" button. A click anywhere on the card, the
+// button included, reaches the single listener on the card, so it opens details exactly once.
+export function createCountryCard(country: CountryView, onOpen: OpenDetails): HTMLLIElement {
   const facts = createElement('dl', { className: 'facts' }, [
-    createFact('Capital', country.capital ?? 'Not available'),
+    createFact('Capital', country.capital ?? NOT_AVAILABLE),
     createFact('Region', country.region),
-    createFact('Population', populationFormat.format(country.population)),
+    createFact('Population', formatNumber(country.population)),
   ]);
-  return createElement('li', { className: 'country-card' }, [
+  const opener = createElement('button', {
+    className: 'details-button',
+    text: 'Details',
+    attributes: {
+      type: 'button',
+      'aria-haspopup': 'dialog',
+      'aria-label': `Show details for ${country.name}`,
+    },
+  });
+  const card = createElement('li', { className: 'country-card' }, [
     createFlag(country),
     createElement('h2', { className: 'country-name', text: country.name }),
     facts,
+    opener,
   ]);
+  card.addEventListener('click', () => {
+    onOpen(country, opener);
+  });
+  return card;
 }

@@ -1,6 +1,8 @@
 import { createSearchController } from '../search-controller.js';
-import type { SearchError, SearchState } from '../types.js';
+import type { CountryView, SearchError, SearchState } from '../types.js';
 import { createCountryCard } from './country-card.js';
+import { openCountryDetails } from './country-details.js';
+import type { CountryDetails } from './country-details.js';
 import { createElement } from './dom.js';
 
 const INPUT_ID = 'country-query';
@@ -57,6 +59,21 @@ export function mountApp(root: HTMLElement): () => void {
   // The Retry button lives in the status area and is replaced with every state.
   let detachRetry: (() => void) | undefined;
 
+  // At most one details dialog exists; it is removed whenever the visible content changes.
+  let details: CountryDetails | undefined;
+
+  function closeDetails(): void {
+    details?.dispose();
+    details = undefined;
+  }
+
+  function openDetails(country: CountryView, opener: HTMLButtonElement): void {
+    closeDetails();
+    details = openCountryDetails(country, opener, app, () => {
+      details = undefined;
+    });
+  }
+
   function clearStatus(): void {
     detachRetry?.();
     detachRetry = undefined;
@@ -83,6 +100,7 @@ export function mountApp(root: HTMLElement): () => void {
   }
 
   function render(state: SearchState): void {
+    closeDetails();
     switch (state.status) {
       case 'idle':
         results.replaceChildren();
@@ -106,7 +124,9 @@ export function mountApp(root: HTMLElement): () => void {
         break;
       case 'results':
         showStatus(describeResults(state.countries.length, state.query));
-        results.replaceChildren(...state.countries.map(createCountryCard));
+        results.replaceChildren(
+          ...state.countries.map((country) => createCountryCard(country, openDetails)),
+        );
         break;
     }
   }
@@ -131,6 +151,7 @@ export function mountApp(root: HTMLElement): () => void {
     detachRetry?.();
     detachRetry = undefined;
     controller.dispose();
+    closeDetails();
     app.remove();
   };
 }
