@@ -101,6 +101,7 @@ export function mountApp(root: HTMLElement): () => void {
 
   function render(state: SearchState): void {
     closeDetails();
+    status.dataset.state = state.status;
     switch (state.status) {
       case 'idle':
         results.replaceChildren();

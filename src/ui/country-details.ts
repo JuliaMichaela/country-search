@@ -55,6 +55,7 @@ export function openCountryDetails(
   onClosed: () => void,
 ): CountryDetails {
   const closeButton = createElement('button', {
+    className: 'close-button',
     text: 'Close',
     attributes: { type: 'button' },
   });
@@ -77,11 +78,15 @@ export function openCountryDetails(
     'dialog',
     { className: 'country-details', attributes: { 'aria-labelledby': TITLE_ID } },
     [
-      createFlag(country),
-      createElement('h2', { text: country.name, attributes: { id: TITLE_ID } }),
-      createElement('p', { className: 'description', text: describe(country) }),
-      rows,
-      closeButton,
+      createElement('div', { className: 'dialog-header' }, [
+        createFlag(country),
+        createElement('h2', { text: country.name, attributes: { id: TITLE_ID } }),
+        closeButton,
+      ]),
+      createElement('div', { className: 'dialog-body' }, [
+        createElement('p', { className: 'description', text: describe(country) }),
+        rows,
+      ]),
     ],
   );
 
